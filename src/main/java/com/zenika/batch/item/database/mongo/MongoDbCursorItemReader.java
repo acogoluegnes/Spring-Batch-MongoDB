@@ -3,12 +3,15 @@
  */
 package com.zenika.batch.item.database.mongo;
 
+import java.util.Map;
+
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.util.Assert;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -34,6 +37,8 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	private DBCursor cursor;
 	
 	private String [] fields;
+	
+	private Map<String,?> refMap;
 	
 	private DbObjectMapper<T> dbObjectMapper;
 	
@@ -63,11 +68,23 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	}
 	
 	private DBObject createDbObjectKeys() {
-		return new BasicDBObject();
+		if(fields == null) {
+			return new BasicDBObject();
+		} else {
+			BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
+			for(String field : fields) {
+				builder.add(field,1);
+			}
+			return builder.get();
+		}
 	}
 
 	private DBObject createDbObjectRef() {
-		return new BasicDBObject();
+		if(refMap == null) {
+			return new BasicDBObject();
+		} else {
+			return BasicDBObjectBuilder.start(refMap).get();
+		}
 	}
 	
 	@Override
@@ -83,9 +100,17 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 		Assert.notNull(collectionName,"collectionName must be set");
 		collection = db.getCollection(collectionName);
 	}
+	
+	public void setRefMap(Map<String, ?> refMap) {
+		this.refMap = refMap;
+	}
 
 	public void setMongo(Mongo mongo) {
 		this.mongo = mongo;
+	}
+	
+	public void setFields(String[] fields) {
+		this.fields = fields;
 	}
 
 	public void setDatabaseName(String databaseName) {
