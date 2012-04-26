@@ -36,18 +36,19 @@ public class MongoDbCursorItemReaderTest {
 	
 	@Before public void setUp() throws Exception {
 		mongo = new Mongo();
-		initReader();
+		reader = initReader(DBObject.class);
+		reader.setDbObjectMapper(new PassthroughDbObjectMapper());
 		collection().drop();
 	}
 
-	private void initReader() throws Exception {
-		reader = new MongoDbCursorItemReader<DBObject>();
-		reader.setMongo(mongo);
-		reader.setDatabaseName(databaseName);
-		reader.setCollectionName("dummy");
-		reader.setName(readerName);
-		reader.setDbObjectMapper(new PassthroughDbObjectMapper());
-		reader.afterPropertiesSet();
+	private <T> MongoDbCursorItemReader<T> initReader(Class<T> cl) throws Exception {
+		MongoDbCursorItemReader<T> r = new MongoDbCursorItemReader<T>();
+		r.setMongo(mongo);
+		r.setDatabaseName(databaseName);
+		r.setCollectionName("dummy");
+		r.setName(readerName);		
+		r.afterPropertiesSet();
+		return r;
 	}
 
 	@Test public void justRead() throws Exception {
@@ -110,6 +111,23 @@ public class MongoDbCursorItemReaderTest {
 		reader.close();
 	}
 	
+	@Test public void mapDoc() throws Exception {
+		int docCount = 20;
+		insertDocuments(docCount);
+		MongoDbCursorItemReader<Dummy> r = initReader(Dummy.class);
+		r.setDbObjectMapper(new DummyObjectMapper());
+		r.open(new ExecutionContext());
+		int itemCount = 0;
+		Dummy doc = null;
+		while((doc = r.read()) != null) {
+			assertThat(doc.number,is(itemCount));
+			assertThat(doc.name,is("bla "+itemCount));
+			itemCount++;			
+		}
+		assertThat(itemCount,is(docCount));
+		r.close();
+	}
+	
 	private ExecutionContext executionContext(int readCount) {
 		ExecutionContext ctx = new ExecutionContext();
 		ctx.putInt(new ExecutionContextUserSupport(readerName).getKey("read.count"),readCount);
@@ -140,6 +158,26 @@ public class MongoDbCursorItemReaderTest {
 			return dbObject;
 		}
 		
+	}
+	
+	private static class Dummy {
+		
+		private final Integer number;
+		private final String name;
+		
+		public Dummy(Integer number, String name) {
+			super();
+			this.number = number;
+			this.name = name;
+		}
+		
+	}
+	
+	private static class DummyObjectMapper implements DbObjectMapper<Dummy> {
+		@Override
+		public Dummy map(DBObject dbObject) {
+			return new Dummy(((Number) dbObject.get("number")).intValue(),dbObject.get("name").toString());
+		}
 	}
 	
 }
