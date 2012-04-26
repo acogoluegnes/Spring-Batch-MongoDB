@@ -38,6 +38,9 @@ public class MongoDbCursorItemReaderIntegrationTest {
 
 	@Autowired
 	Job job;
+	
+	@Autowired
+	Job jobWithCriteria;
 
 	@Autowired
 	CountingItemWriter<DBObject> writer;
@@ -56,8 +59,7 @@ public class MongoDbCursorItemReaderIntegrationTest {
 		collection().drop();
 	}
 
-	@Test
-	public void simpleReading() throws Exception {
+	@Test public void simpleReading() throws Exception {
 		int docCount = 112;
 		insertDocuments(docCount);
 
@@ -66,6 +68,17 @@ public class MongoDbCursorItemReaderIntegrationTest {
 		assertThat(exec.getStatus(), is(BatchStatus.COMPLETED));
 		assertThat(writer.getCounter(), is(docCount));
 	}
+	
+	@Test public void largeReading() throws Exception {
+		int docCount = 1000;
+		insertDocuments(docCount);
+
+		JobExecution exec = jobLauncher.run(job, new JobParametersBuilder()
+				.addLong("time", System.currentTimeMillis()).toJobParameters());
+		assertThat(exec.getStatus(), is(BatchStatus.COMPLETED));
+		assertThat(writer.getCounter(), is(docCount));
+	}
+
 
 	@Test public void restartAfterFailure() throws Exception {
 		int docCount = 112;
@@ -97,6 +110,18 @@ public class MongoDbCursorItemReaderIntegrationTest {
 		assertThat(exec.getStatus(),is(BatchStatus.COMPLETED));
 		assertThat(writer.getCounter(),is(docCount+itemsThatWillComeBackAgain));
 	}
+	
+	@Test public void readingWithCriteriaAndFields() throws Exception {
+		int docCount = 115;
+		int limit = 12;
+		insertDocuments(docCount);
+
+		JobExecution exec = jobLauncher.run(jobWithCriteria, new JobParametersBuilder()
+				.addLong("time", System.currentTimeMillis()).toJobParameters());
+		assertThat(exec.getStatus(), is(BatchStatus.COMPLETED));
+		assertThat(writer.getCounter(), is(docCount-limit-1));
+	}
+
 
 	private void insertDocuments(int docCount) {
 		for (int i = 0; i < docCount; i++) {
