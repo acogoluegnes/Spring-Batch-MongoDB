@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xsi:schemaLocation="http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<import resource="classpath:/test-batch-infrastructure-context.xml" />
+
+	<batch:job id="job">
+		<batch:step id="step">
+			<batch:tasklet>
+				<batch:chunk reader="reader" writer="writer" commit-interval="5"/>
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+	
+	<bean id="reader" class="com.zenika.batch.item.database.mongo.MongoDbCursorItemReader">
+		<property name="mongo" ref="mongo" />
+		<property name="databaseName" value="${mongo.db}" />
+		<property name="collectionName" value="dummy" />
+		<property name="dbObjectMapper">
+			<bean class="com.zenika.batch.item.database.mongo.PassthroughDbObjectMapper" />
+		</property>
+	</bean>
+	
+	<bean id="writer" class="com.zenika.batch.item.database.mongo.CountingItemWriter" />
+	
+	<mongo:mongo />
+
+</beans>

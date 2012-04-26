@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.util.ExecutionContextUserSupport;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import com.google.common.collect.ImmutableMap;
 import com.mongodb.BasicDBObjectBuilder;
@@ -26,7 +27,7 @@ public class MongoDbCursorItemReaderTest {
 	
 	private MongoDbCursorItemReader<DBObject> reader;
 	
-	private String databaseName = "spring-batch-mongo-test";
+	private String databaseName;
 	
 	private String collectionName = "dummy";
 	
@@ -35,6 +36,7 @@ public class MongoDbCursorItemReaderTest {
 	private Mongo mongo;
 	
 	@Before public void setUp() throws Exception {
+		databaseName = PropertiesLoaderUtils.loadAllProperties("mongo.properties").getProperty("mongo.db");
 		mongo = new Mongo();
 		reader = initReader(DBObject.class);
 		reader.setDbObjectMapper(new PassthroughDbObjectMapper());
@@ -149,15 +151,6 @@ public class MongoDbCursorItemReaderTest {
 	
 	private DBCollection collection() {
 		return mongo.getDB(databaseName).getCollection(collectionName); 
-	}
-	
-	private static class PassthroughDbObjectMapper implements DbObjectMapper<DBObject> {
-
-		@Override
-		public DBObject map(DBObject dbObject) {
-			return dbObject;
-		}
-		
 	}
 	
 	private static class Dummy {

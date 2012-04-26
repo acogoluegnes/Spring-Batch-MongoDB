@@ -9,6 +9,7 @@ import org.springframework.batch.item.support.AbstractItemCountingItemStreamItem
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
@@ -41,6 +42,11 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	private Map<String,?> refMap;
 	
 	private DbObjectMapper<T> dbObjectMapper;
+	
+	public MongoDbCursorItemReader() {
+		super();
+		setName(ClassUtils.getShortName(MongoDbCursorItemReader.class));
+	}
 	
 	@Override
 	protected void doOpen() throws Exception {
