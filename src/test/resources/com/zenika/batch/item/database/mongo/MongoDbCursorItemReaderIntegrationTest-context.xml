@@ -47,14 +47,14 @@
 		<property name="dbObjectMapper">
 			<bean class="com.zenika.batch.item.database.mongo.PassthroughDbObjectMapper" />
 		</property>
-		<property name="refMap">
-			<util:map>
-				<entry key="number">
-					<util:map value-type="java.lang.Integer">
-						<entry key="$gt" value="12" />
-					</util:map>
-				</entry>
-			</util:map>
+		<property name="refDbObject">
+			<value>#{ 
+			T(com.mongodb.BasicDBObjectBuilder)
+				.start()
+					.push("number").add("$gt",12)
+				.pop()
+				.get() 
+			}</value>
 		</property>
 		<property name="fields" value="number" />
 	</bean>

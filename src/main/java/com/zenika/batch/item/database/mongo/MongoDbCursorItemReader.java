@@ -3,11 +3,8 @@
  */
 package com.zenika.batch.item.database.mongo;
 
-import java.util.Map;
-
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -29,8 +26,6 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	
 	private String databaseName;
 	
-	private MongoDbFactory mongoDbFactory;
-	
 	private DBCollection collection;
 	
 	private String collectionName;
@@ -39,7 +34,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	
 	private String [] fields;
 	
-	private Map<String,?> refMap;
+	private DBObject refDbObject;
 	
 	private DbObjectMapper<T> dbObjectMapper;
 	
@@ -73,7 +68,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 		cursor = cursor.skip(itemIndex);
 	}
 	
-	private DBObject createDbObjectKeys() {
+	protected DBObject createDbObjectKeys() {
 		if(fields == null) {
 			return new BasicDBObject();
 		} else {
@@ -85,30 +80,25 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 		}
 	}
 
-	private DBObject createDbObjectRef() {
-		if(refMap == null) {
+	protected DBObject createDbObjectRef() {
+		if(refDbObject == null) {
 			return new BasicDBObject();
 		} else {
-			return BasicDBObjectBuilder.start(refMap).get();
+			return refDbObject;
 		}
 	}
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		DB db = null;
-		if(mongoDbFactory == null) {
-			Assert.notNull(mongo,"Mongo must be specified if MongoDbFactory is null");
-			Assert.notNull(databaseName,"Mongo AND database must be set");
-			db = mongo.getDB(databaseName);
-		} else {
-			db = mongoDbFactory.getDb();
-		}
+		Assert.notNull(mongo,"Mongo must be specified if MongoDbFactory is null");
+		Assert.notNull(databaseName,"Mongo AND database must be set");
 		Assert.notNull(collectionName,"collectionName must be set");
+		DB db = mongo.getDB(databaseName);
 		collection = db.getCollection(collectionName);
 	}
 	
-	public void setRefMap(Map<String, ?> refMap) {
-		this.refMap = refMap;
+	public void setRefDbObject(DBObject refDbObject) {
+		this.refDbObject = refDbObject;
 	}
 
 	public void setMongo(Mongo mongo) {

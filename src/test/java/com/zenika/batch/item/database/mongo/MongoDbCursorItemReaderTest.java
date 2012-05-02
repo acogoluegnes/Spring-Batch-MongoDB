@@ -72,7 +72,7 @@ public class MongoDbCursorItemReaderTest {
 		int docCount = 20;
 		insertDocuments(docCount);
 		int limit = 12;
-		reader.setRefMap(ImmutableMap.of("number",ImmutableMap.of("$gt",limit)));
+		reader.setRefDbObject(BasicDBObjectBuilder.start().push("number").add("$gt",limit).pop().get());
 		reader.open(new ExecutionContext());
 		int itemCount = 0;
 		while(reader.read() != null) {
