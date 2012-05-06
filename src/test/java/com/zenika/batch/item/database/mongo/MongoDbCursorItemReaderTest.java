@@ -11,9 +11,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.util.ExecutionContextUserSupport;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
-import com.google.common.collect.ImmutableMap;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -39,7 +39,7 @@ public class MongoDbCursorItemReaderTest {
 		databaseName = PropertiesLoaderUtils.loadAllProperties("mongo.properties").getProperty("mongo.db");
 		mongo = new Mongo();
 		reader = initReader(DBObject.class);
-		reader.setDbObjectMapper(new PassthroughDbObjectMapper());
+		reader.setDbObjectConverter(new PassthroughDbObjectConverter());
 		collection().drop();
 	}
 
@@ -117,7 +117,7 @@ public class MongoDbCursorItemReaderTest {
 		int docCount = 20;
 		insertDocuments(docCount);
 		MongoDbCursorItemReader<Dummy> r = initReader(Dummy.class);
-		r.setDbObjectMapper(new DummyObjectMapper());
+		r.setDbObjectConverter(new DummyObjectMapper());
 		r.open(new ExecutionContext());
 		int itemCount = 0;
 		Dummy doc = null;
@@ -166,10 +166,10 @@ public class MongoDbCursorItemReaderTest {
 		
 	}
 	
-	private static class DummyObjectMapper implements DbObjectMapper<Dummy> {
+	private static class DummyObjectMapper implements Converter<DBObject,Dummy> {
 		@Override
-		public Dummy map(DBObject dbObject) {
-			return new Dummy(((Number) dbObject.get("number")).intValue(),dbObject.get("name").toString());
+		public Dummy convert(DBObject source) {
+			return new Dummy(((Number) source.get("number")).intValue(),source.get("name").toString());
 		}
 	}
 	

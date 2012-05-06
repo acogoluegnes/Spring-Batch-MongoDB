@@ -5,6 +5,7 @@ package com.zenika.batch.item.database.mongo;
 
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -36,7 +37,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	
 	private DBObject refDbObject;
 	
-	private DbObjectMapper<T> dbObjectMapper;
+	private Converter<DBObject,T> dbObjectConverter;
 	
 	public MongoDbCursorItemReader() {
 		super();
@@ -54,7 +55,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 			return null;
 		} else {
 			DBObject dbObj = cursor.next();
-			return dbObjectMapper.map(dbObj);
+			return dbObjectConverter.convert(dbObj);
 		}
 	}
 	
@@ -90,7 +91,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		Assert.notNull(mongo,"Mongo must be specified if MongoDbFactory is null");
+		Assert.notNull(mongo,"Mongo must be specified");
 		Assert.notNull(databaseName,"Mongo AND database must be set");
 		Assert.notNull(collectionName,"collectionName must be set");
 		DB db = mongo.getDB(databaseName);
@@ -117,8 +118,8 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 		this.collectionName = collectionName;
 	}
 
-	public void setDbObjectMapper(DbObjectMapper<T> dbObjectMapper) {
-		this.dbObjectMapper = dbObjectMapper;
+	public void setDbObjectConverter(Converter<DBObject, T> dbObjectConverter) {
+		this.dbObjectConverter = dbObjectConverter;
 	}
 	
 }
